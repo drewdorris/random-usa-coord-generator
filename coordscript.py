@@ -20,44 +20,57 @@ shapefile = gpd.read_file("cb_2018_us_state_20m.shp")
 #for i in range(0, 51):
 #    areas.append(shapefile.loc[i].NAME)
 
-mpolygon = shapefile.loc[random.randint(0, 51)].geometry
-gdf_poly = gpd.GeoDataFrame(index=["myPoly"], geometry=[mpolygon])
+for r in range(0, 100):
+    loc = shapefile.loc[random.randint(0, 51)]
+    mpolygon = loc.geometry
+    gdf_poly = gpd.GeoDataFrame(index=["myPoly"], geometry=[mpolygon])
 
-x,y = Random_Points_in_Bounds(mpolygon, 1000)
-df = pd.DataFrame()
-df['points'] = list(zip(x,y))
-df['points'] = df['points'].apply(Point)
-gdf_points = gpd.GeoDataFrame(df, geometry='points')
+    x,y = Random_Points_in_Bounds(mpolygon, 1000)
+    df = pd.DataFrame()
+    df['points'] = list(zip(x,y))
+    df['points'] = df['points'].apply(Point)
+    gdf_points = gpd.GeoDataFrame(df, geometry='points')
 
-Sjoin = gpd.tools.sjoin(gdf_points, gdf_poly, predicate="within", how='left')
+    Sjoin = gpd.tools.sjoin(gdf_points, gdf_poly, predicate="within", how='left')
 
-# Keep points in "myPoly"
-pnts_in_poly = gdf_points[Sjoin.index_right=='myPoly']
+    # Keep points in "myPoly"
+    pnts_in_poly = gdf_points[Sjoin.index_right=='myPoly']
 
-print(len(pnts_in_poly))
-print(pnts_in_poly)
-#print(pnts_in_poly.points[0])
+    pointsToCalcDensity = []
+    i = 0
+    for point in pnts_in_poly.points:
+        if point is None:
+            continue
+        i+=1
+        pointsToCalcDensity.append(point)
+        if i == 300:
+            break
 
-lastpoints = pnts_in_poly.points[0:10]
-print(lastpoints)
+    fp = r'usa_pd_2020_1km.tif'
+    img = rasterio.open(fp)
+    #show(img)
 
-base = gdf_poly.boundary.plot(linewidth=1, edgecolor="black")
-pnts_in_poly.plot(ax=base, linewidth=1, color="red", markersize=8)
-plt.show()
+    band1 = img.read(1)
+    highestPoint = None
+    highestVal = 0
+    for point in pointsToCalcDensity:
+        if point.y > img.height or point.x > img.height:
+            continue
+        if loc.NAME == 'Puerto Rico':
+            val = 1
+        else:
+            val = band1[img.index(point.x, point.y)]
+            
+        if (val > highestVal):
+            highestVal = val
+            highestPoint = point
 
-#Image.MAX_IMAGE_PIXELS = None
-#realimage = Image.open('usa_pd_2020_1km.tif')
-#realimage.show()
-#im = np.array(realimage, dtype=np.uint8)
-#print(im[500, 700])
+    print('"' + str(highestPoint) + '",' + 'Location ' + str(r) + ',')
 
-fp = r'usa_pd_2020_1km.tif'
-img = rasterio.open(fp)
-#show(img)
-#print(img.count)
-#print(img.bounds)
-#print(img.transform)
-#print(img.crs)
-band1 = img.read(1)
+
+#base = gdf_poly.boundary.plot(linewidth=1, edgecolor="black")
+#pnts_in_poly.plot(ax=base, linewidth=1, color="red", markersize=8)
+#plt.show()
+
 #print(band1[img.index(-73.913600, 40.656941)]) # high
 #print(band1[img.index(-82.222010, 40.236819)]) # low
