@@ -15,17 +15,17 @@ def Random_Points_in_Bounds(polygon, number):
     y = np.random.uniform( miny, maxy, number )
     return x, y
 
-shapefile = gpd.read_file("cb_2018_us_state_20m.shp")
+shapefile = gpd.read_file("cb_2018_us_nation_5m.shp")
 #areas = []
 #for i in range(0, 51):
 #    areas.append(shapefile.loc[i].NAME)
 
 for r in range(0, 100):
-    loc = shapefile.loc[random.randint(0, 51)]
+    loc = shapefile.loc[0]#.loc[random.randint(0, 51)]
     mpolygon = loc.geometry
     gdf_poly = gpd.GeoDataFrame(index=["myPoly"], geometry=[mpolygon])
 
-    x,y = Random_Points_in_Bounds(mpolygon, 1000)
+    x,y = Random_Points_in_Bounds(mpolygon, 100000)
     df = pd.DataFrame()
     df['points'] = list(zip(x,y))
     df['points'] = df['points'].apply(Point)
@@ -43,8 +43,9 @@ for r in range(0, 100):
             continue
         i+=1
         pointsToCalcDensity.append(point)
-        if i == 300:
+        if i == 100:
             break
+    #print(str(i))
 
     fp = r'usa_pd_2020_1km.tif'
     img = rasterio.open(fp)
@@ -56,9 +57,11 @@ for r in range(0, 100):
     for point in pointsToCalcDensity:
         if point.y > img.height or point.x > img.height:
             continue
-        if loc.NAME == 'Puerto Rico':
+        #if loc.NAME == 'Puerto Rico':
+        if point.x > -70 and point.y < 20 or point.x < -165 and point.y < -10:
             val = 1
         else:
+            #print(str(point.x) + ' ' + str(point.y))
             val = band1[img.index(point.x, point.y)]
             
         if (val > highestVal):
