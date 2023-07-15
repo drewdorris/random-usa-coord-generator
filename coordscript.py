@@ -15,12 +15,15 @@ def Random_Points_in_Bounds(polygon, number):
     y = np.random.uniform( miny, maxy, number )
     return x, y
 
+amountGen = 1
+weight = 3000
+
 shapefile = gpd.read_file("cb_2018_us_nation_5m.shp")
 #areas = []
 #for i in range(0, 51):
 #    areas.append(shapefile.loc[i].NAME)
 
-for r in range(0, 100):
+for r in range(0, amountGen):
     loc = shapefile.loc[0]#.loc[random.randint(0, 51)]
     mpolygon = loc.geometry
     gdf_poly = gpd.GeoDataFrame(index=["myPoly"], geometry=[mpolygon])
@@ -43,7 +46,7 @@ for r in range(0, 100):
             continue
         i+=1
         pointsToCalcDensity.append(point)
-        if i == 100:
+        if i == weight:
             break
     #print(str(i))
 
@@ -68,7 +71,7 @@ for r in range(0, 100):
             highestVal = val
             highestPoint = point
 
-    print('"' + str(highestPoint) + '",' + 'Location ' + str(r) + ',')
+    print(str(point.y) + " " + str(point.x) + ' -- ' + 'Location ' + str(r))
 
 
 #base = gdf_poly.boundary.plot(linewidth=1, edgecolor="black")
