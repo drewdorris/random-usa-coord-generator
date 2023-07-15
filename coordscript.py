@@ -15,20 +15,20 @@ def Random_Points_in_Bounds(polygon, number):
     y = np.random.uniform( miny, maxy, number )
     return x, y
 
-amountGen = 1
+amountGen = 5
 weight = 3000
+printForGoogleMyMaps = True
+showPlot = True
+generatedPoints = []
 
 shapefile = gpd.read_file("cb_2018_us_nation_5m.shp")
-#areas = []
-#for i in range(0, 51):
-#    areas.append(shapefile.loc[i].NAME)
 
 for r in range(0, amountGen):
-    loc = shapefile.loc[0]#.loc[random.randint(0, 51)]
+    loc = shapefile.loc[0]
     mpolygon = loc.geometry
     gdf_poly = gpd.GeoDataFrame(index=["myPoly"], geometry=[mpolygon])
 
-    x,y = Random_Points_in_Bounds(mpolygon, 100000)
+    x,y = Random_Points_in_Bounds(mpolygon, 300000) # arbitrary num that generates a bunch of locs
     df = pd.DataFrame()
     df['points'] = list(zip(x,y))
     df['points'] = df['points'].apply(Point)
@@ -38,6 +38,9 @@ for r in range(0, amountGen):
 
     # Keep points in "myPoly"
     pnts_in_poly = gdf_points[Sjoin.index_right=='myPoly']
+    #print(type(pnts_in_poly))
+    #print(pnts_in_poly.to_json())
+    #print(pnts_in_poly.geometry)
 
     pointsToCalcDensity = []
     i = 0
@@ -48,35 +51,42 @@ for r in range(0, amountGen):
         pointsToCalcDensity.append(point)
         if i == weight:
             break
-    #print(str(i))
 
     fp = r'usa_pd_2020_1km.tif'
     img = rasterio.open(fp)
-    #show(img)
-
     band1 = img.read(1)
+    
     highestPoint = None
     highestVal = 0
     for point in pointsToCalcDensity:
         if point.y > img.height or point.x > img.height:
             continue
-        #if loc.NAME == 'Puerto Rico':
+        # vague bounds for US states
+        # if something is found outside of bounds it is essentially ignored
         if point.x > -70 and point.y < 20 or point.x < -165 and point.y < -10:
             val = 1
         else:
             #print(str(point.x) + ' ' + str(point.y))
             val = band1[img.index(point.x, point.y)]
-            
+
+        # if highest population density found so far, choose it
         if (val > highestVal):
             highestVal = val
             highestPoint = point
 
-    print(str(point.y) + " " + str(point.x) + ' -- ' + 'Location ' + str(r))
+    generatedPoints.append(highestPoint)
+    if printForGoogleMyMaps:
+        print('"' + str(highestPoint) + '",' + 'Location ' + str(r) + ',')
+    else:
+        print(str(highestPoint.y) + " " + str(highestPoint.x))
 
+    if showPlot:
+        ndf = pd.DataFrame({ "Points": generatedPoints })
+        ngdf = gpd.GeoDataFrame(ndf, geometry=generatedPoints, crs="EPSG:4326")
 
-#base = gdf_poly.boundary.plot(linewidth=1, edgecolor="black")
-#pnts_in_poly.plot(ax=base, linewidth=1, color="red", markersize=8)
-#plt.show()
+        base = gdf_poly.boundary.plot(linewidth=1, edgecolor="black")
+        ngdf.plot(ax=base, linewidth=1, color="red", markersize=10)
 
-#print(band1[img.index(-73.913600, 40.656941)]) # high
-#print(band1[img.index(-82.222010, 40.236819)]) # low
+        plt.xlim([-180, -60])
+        plt.ylim([15, 75])
+        plt.show()
