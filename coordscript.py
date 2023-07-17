@@ -70,13 +70,9 @@ for r in range(0, amountGen):
 
     # filter points generated to only keep ones within US borders
     pnts_in_poly = gdf_points[Sjoin.index_right=='myPoly']
-    #print(type(pnts_in_poly))
-    #print(pnts_in_poly.to_json())
-    #print(pnts_in_poly.geometry)
 
     pointsToCalcDensity = []
     i = 0
-    #print(pnts_in_poly.count())
     for point in pnts_in_poly.points:
         if point is None:
             continue
@@ -99,13 +95,12 @@ for r in range(0, amountGen):
         if point.x > -70 and point.y < 20 or point.x < -165 and point.y < -10:
             val = 1
         else:
-            #print(str(point.x) + ' ' + str(point.y))
             val = band1[img.index(point.x, point.y)]
 
         # if highest population density found so far, choose it
         if (val > highestVal):
-            # this checks if is within one of the metros that we filter from
-            # if so, maybe filter
+            # this checks if is within one of the metros that we filter from (if we filter)
+            # if so, filter
             if reduceTopMetros:
                 breakout = False
                 for metro in metros:
