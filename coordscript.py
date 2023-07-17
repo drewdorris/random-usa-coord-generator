@@ -20,11 +20,12 @@ def Random_Points_in_Bounds(polygon, number):
     y = np.random.uniform( miny, maxy, number )
     return x, y
 
-amountGen = 1
-weight = 200
-printForGoogleMyMaps = False
-showPlot = True
-reduceTopMetros = False
+amountGen = 1 # number of locations generated in this run
+weight = 200 # number of locations compared to find the one with highest population density (higher = likely to find higher density locs)
+printForGoogleMyMaps = False # True to print in a format that can be imported into Google My Maps if copied into a .csv file; False will just print the coordinate
+showPlot = True # True to show a map after generating all locs with all of the points generated shown
+reduceTopMetros = False # True to limit the number of locations generated in large metro areas (metro configuration shown below)
+
 generatedPoints = []
 
 # rough approximations for different metro areas
@@ -49,6 +50,9 @@ metros.append(Metro(Polygon([(32.560054, -117.494406), (33.292011, -117.494406),
 metros.append(Metro(Polygon([(32.803943, -112.498374), (33.932466, -112.498374), (33.932466, -111.454673), (32.803943, -111.454673)]), 0.30)) ## phoenix area
 
 shapefile = gpd.read_file("cb_2018_us_nation_5m.shp")
+
+if printForGoogleMyMaps:
+    print("WKT,name,description")
 
 for r in range(0, amountGen):
     chance = random.random()
